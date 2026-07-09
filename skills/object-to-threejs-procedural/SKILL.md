@@ -35,6 +35,8 @@ Use plugin scripts when they make the loop faster or more reliable:
 These scripts live at the plugin root, not inside this skill folder. From this `SKILL.md` directory, use `../../scripts/...`.
 
 - `../../scripts/probe_reference_image.py <image>` checks image type, dimensions, aspect ratio, and obvious technical issues. It does not replace visual inspection.
+- `../../scripts/extract_reference_pbr.py <image> --out-dir <dir> --material-id <id> --target-threshold 0.7` extracts reference-derived albedo, roughness, height, normal, and AO maps from image pixels. It exits non-zero when confidence is below the target threshold.
+- `../../scripts/extract_reference_pbr.py <image> --out-dir <dir> --material-id <id> --spec object-sculpt-spec.json --in-place` patches a material with usable `referencePbr` maps only when the confidence gate passes, unless `--allow-low-confidence` is explicitly used.
 - `../../scripts/new_pre_spec_assessment.py "Object Name" --image <path> --complexity <simple|moderate|complex|ultra-complex> --out assessment.json` creates a pre-spec complexity assessment and quality contract skeleton.
 - `../../scripts/new_sculpt_spec.py "Object Name" --image <path> --out object-sculpt-spec.json` creates a starter spec.
 - `../../scripts/new_sculpt_spec.py "Object Name" --image <path> --assessment assessment.json --out object-sculpt-spec.json` creates a starter spec from a completed pre-spec assessment.
@@ -52,11 +54,12 @@ Prefer this loop for implementation tasks:
 1. Probe the image if it is local.
 2. Run the Pre-Spec Assessment Gate: classify the object softly, score complexity, and write the quality contract before authoring the full spec.
 3. Create or revise `ObjectSculptSpec` from the completed assessment and quality contract.
-4. Validate the spec with normal validation, then run `--strict-quality` before code generation.
-5. Generate a factory skeleton only after the strict quality gate passes or after explicitly documenting accepted fidelity limits.
-6. Hand-refine geometry, materials, animation anchors, and destruction anchors one pass at a time. Do not generate or implement a deeper pass until `sculpt_pass_orchestrator.py check` passes for that pass.
-7. After each visual pass, capture a browser screenshot, compare it to the reference, run the self-correction gate, and update `reviewHistory`.
-8. Run project typecheck/build and browser visual review; use the Codex in-app Browser screenshot tool first. Do not install or download Playwright/Chromium just for this skill unless the user explicitly requests that route.
+4. When material fidelity matters and a source image is available, run `extract_reference_pbr.py` for each important material crop/region before material-pass. Treat confidence below `0.7` as a stop/refine-input signal, not as a pass.
+5. Validate the spec with normal validation, then run `--strict-quality` before code generation.
+6. Generate a factory skeleton only after the strict quality gate passes or after explicitly documenting accepted fidelity limits.
+7. Hand-refine geometry, materials, animation anchors, and destruction anchors one pass at a time. Do not generate or implement a deeper pass until `sculpt_pass_orchestrator.py check` passes for that pass.
+8. After each visual pass, capture a browser screenshot, compare it to the reference, run the self-correction gate, and update `reviewHistory`.
+9. Run project typecheck/build and browser visual review; use the Codex in-app Browser screenshot tool first. Do not install or download Playwright/Chromium just for this skill unless the user explicitly requests that route.
 
 ## 3D Terminology Discipline
 
@@ -319,10 +322,13 @@ When `lookDevTargets.qualityPriority` is `reference-fidelity`, apply the quality
 - important close-up materials use independent albedo, roughness, height/normal, and AO channels
 - surface response is decomposed into macro, meso, and micro frequency bands
 - important procedural maps are at least 1024px, preferably 2048px
+- if a source image exists, important close-up materials have usable `referencePbr` pixel extraction with confidence >= the configured target threshold, default `0.7`
 - UV/projection and texel-density intent are explicit
 - silhouette-affecting relief uses geometry or displacement-capable topology
 - material review includes neutral, grazing-light close-up, and reference-matched screenshots
 - optimization happens after fidelity is accepted; do not remove reference-critical geometry merely to hit an arbitrary polygon floor
+
+Reference PBR extraction is an inference gate, not a magic guarantee. From one photo, Codex cannot uniquely recover true physical albedo, roughness, height, normal, and AO. If the extractor confidence is below the target threshold or the rendered material still fails screenshot review, choose `request-input`, `refine-spec`, or `refine-code` instead of pretending the material reached the requested fidelity.
 
 Structural and form passes have an attachment gate. Child appendages such as branches, limbs, handles, legs, horns, wings, tubes, cables, connectors, and hinged parts must include `attachment.parentSocket`, `localStart`, `localEnd`, `contactType`, `embedDepth` or `overlap`, and `gapTolerance`. The generator should build these parts from root endpoint to tip endpoint instead of centering them at an arbitrary transform.
 

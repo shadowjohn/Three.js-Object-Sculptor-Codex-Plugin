@@ -137,6 +137,7 @@ def make_quality_contract() -> dict:
                 "required": True,
                 "qualityCriteria": [
                     "Material-pass names the reference-derived albedo palette, roughness variation, tactile normal/bump/displacement response, and local masks.",
+                    "When a source image is available, run reference PBR extraction and require confidence >= 0.7 before treating maps as implementation-ready.",
                     "Lighting-pass names key/fill/rim or environment light, exposure, tone mapping, background, and contact shadow behavior.",
                     "Neutral, grazing-angle, and reference-matched renders prove that surface relief survives relighting and is not painted into albedo.",
                 ],
@@ -163,6 +164,8 @@ def make_quality_contract() -> dict:
             "Do not proceed past structural-pass if attached child parts lack attachment.parentSocket, localStart, localEnd, embedDepth/overlap, and gapTolerance.",
             "Do not pass material look-dev when albedo is reused as roughness, height, normal, or AO.",
             "Do not pass material look-dev without macro, meso, and micro surface frequency bands for close-up materials.",
+            "Do not pass reference-fidelity material look-dev from a source image without usable referencePbr maps or an explicit documented limitation.",
+            "Do not patch a spec with extracted PBR maps when extraction confidence is below the target threshold unless the user explicitly accepts lower fidelity.",
         ],
     }
 
@@ -241,10 +244,11 @@ def make_spec(target_name: str, image: str | None, assessment_payload: dict | No
         "preSpecAssessment": pre_spec_assessment,
         "qualityContract": quality_contract,
         "qualityTargets": {
-            "targetFidelity": 0.8,
+            "targetFidelity": 0.7,
             "mustMatch": [
                 "macro silhouette and proportions",
                 "primary material albedo/roughness response",
+                "reference-derived PBR material response at or above 0.7 confidence when source pixels are usable",
                 "most recognizable local features",
             ],
             "niceToHave": [
@@ -346,6 +350,13 @@ def make_spec(target_name: str, image: str | None, assessment_payload: dict | No
                 ],
                 "requiredSurfaceFrequencyBands": ["macro", "meso", "micro"],
                 "geometryReliefRequiredWhenSilhouetteAffected": True,
+                "referencePbrExtraction": {
+                    "requiredWhenSourceImagePresent": True,
+                    "targetThreshold": 0.7,
+                    "stopOnLowConfidence": True,
+                    "script": "../../scripts/extract_reference_pbr.py",
+                    "acceptedLimitation": "single-image extraction is reference-derived inference, not exact photogrammetry",
+                },
                 "mustAvoid": [
                     "single flat albedo per material",
                     "uniform roughness",
@@ -353,6 +364,7 @@ def make_spec(target_name: str, image: str | None, assessment_payload: dict | No
                     "single-frequency random noise",
                     "plastic-looking smooth bark, stone, cloth, foliage, or aged material",
                     "local color/detail described only in prose without material masks",
+                    "claiming exact PBR recovery when confidence is below the target threshold",
                 ],
             },
             "lightingPass": {
@@ -678,6 +690,7 @@ def make_spec(target_name: str, image: str | None, assessment_payload: dict | No
                     "Thin, transparent, reflective, wet, or fibrous materials document alpha/transmission/clearcoat/metalness/fiber response when relevant.",
                     "Generated preview uses procedural albedo/roughness/bump texture or vertex color variation instead of one flat color.",
                     "Generated preview uses independent PBR maps at 1024px or higher for the quality-first tier.",
+                    "If source pixels are available, referencePbr extraction passed at confidence >= 0.7 or the pass is stopped/requesting better references.",
                     "Macro, meso, and micro surface frequency bands are visible at the intended review distance without obvious tiling.",
                 ],
             },
@@ -748,6 +761,7 @@ def make_spec(target_name: str, image: str | None, assessment_payload: dict | No
             "Add component hierarchy and joints.",
             "Create stable pivot groups, sockets, collider proxies, and destruction metadata before visual polish.",
             "Refine forms with bevels, tapers, bends, and procedural noise.",
+            "Run reference PBR extraction for important source-image materials and stop when confidence is below the target threshold.",
             "Add material variation before adding expensive micro-geometry.",
         ],
         "animationAnchors": [

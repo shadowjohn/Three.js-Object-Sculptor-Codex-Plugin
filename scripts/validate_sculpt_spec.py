@@ -259,7 +259,58 @@ def validate_material_scalar_or_layer(value: Any, label: str, errors: list[str])
         errors.append(f"{label}.variation must be numeric")
 
 
-def validate_materials(spec: dict[str, Any], errors: list[str]) -> set[str]:
+def validate_reference_pbr_map(value: Any, label: str, errors: list[str]) -> None:
+    if not isinstance(value, dict):
+        errors.append(f"{label} must be an object")
+        return
+    has_locator = False
+    for field in ("path", "url"):
+        item = value.get(field)
+        if item is not None:
+            if not isinstance(item, str) or not item.strip():
+                errors.append(f"{label}.{field} must be a non-empty string when present")
+            else:
+                has_locator = True
+    if not has_locator:
+        errors.append(f"{label} needs a path or url")
+    channel = value.get("channel")
+    if channel is not None and not isinstance(channel, str):
+        errors.append(f"{label}.channel must be a string")
+
+
+def validate_reference_pbr(material_id: str, value: Any, errors: list[str], warnings: list[str]) -> None:
+    if value is None:
+        return
+    if not isinstance(value, dict):
+        errors.append(f"material {material_id!r} referencePbr must be an object")
+        return
+    for field in ("version", "sourceImage", "extractor", "method", "verdict", "hardLimit"):
+        item = value.get(field)
+        if item is not None and not isinstance(item, str):
+            errors.append(f"material {material_id!r} referencePbr.{field} must be a string")
+    usable = value.get("usable")
+    if usable is not None and not isinstance(usable, bool):
+        errors.append(f"material {material_id!r} referencePbr.usable must be boolean")
+    for field in ("confidence", "estimatedFidelity", "targetThreshold"):
+        item = value.get(field)
+        if item is not None:
+            validate_unit_interval(item, f"material {material_id!r} referencePbr.{field}", errors)
+    maps = value.get("maps")
+    if maps is None:
+        warnings.append(f"quality: material {material_id!r} referencePbr is missing maps")
+        return
+    if not isinstance(maps, dict):
+        errors.append(f"material {material_id!r} referencePbr.maps must be an object")
+        return
+    required = ("albedo", "roughness", "height", "normal", "ao")
+    for channel in required:
+        if channel not in maps:
+            warnings.append(f"quality: material {material_id!r} referencePbr.maps missing {channel}")
+        else:
+            validate_reference_pbr_map(maps[channel], f"material {material_id!r} referencePbr.maps.{channel}", errors)
+
+
+def validate_materials(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> set[str]:
     material_ids: set[str] = set()
     for index, material in enumerate(spec.get("materials", [])):
         if not isinstance(material, dict):
@@ -349,6 +400,7 @@ def validate_materials(spec: dict[str, Any], errors: list[str]) -> set[str]:
         shader_notes = material.get("shaderNotes")
         if shader_notes is not None:
             validate_string_array(shader_notes, f"material {material_id!r} shaderNotes", errors)
+        validate_reference_pbr(material_id, material.get("referencePbr"), errors, warnings)
     if not material_ids:
         errors.append("at least one material is required")
     return material_ids
@@ -986,6 +1038,26 @@ def layer_number(value: Any, keys: tuple[str, ...]) -> float:
     return 0.0
 
 
+def reference_pbr_usable(material: dict[str, Any], threshold: float) -> tuple[bool, str]:
+    reference = material.get("referencePbr")
+    material_id = str(material.get("id") or "(unnamed)")
+    if not isinstance(reference, dict):
+        return False, f"material {material_id!r} needs usable referencePbr extracted from source pixels"
+    if reference.get("usable") is not True:
+        return False, f"material {material_id!r} referencePbr.usable must be true"
+    confidence = reference.get("confidence", reference.get("estimatedFidelity"))
+    if not is_number(confidence) or float(confidence) < threshold:
+        return False, f"material {material_id!r} referencePbr confidence must be >= {threshold}"
+    maps = reference.get("maps")
+    if not isinstance(maps, dict):
+        return False, f"material {material_id!r} referencePbr needs maps"
+    for channel in ("albedo", "roughness", "height", "normal", "ao"):
+        entry = maps.get(channel)
+        if not isinstance(entry, dict) or not has_non_empty_detail(entry.get("url") or entry.get("path")):
+            return False, f"material {material_id!r} referencePbr missing {channel} map path/url"
+    return True, ""
+
+
 def validate_look_dev_targets(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
     targets = spec.get("lookDevTargets")
     if targets is None:
@@ -1052,6 +1124,16 @@ def validate_look_dev_targets(spec: dict[str, Any], errors: list[str], warnings:
                 for item in material_targets.get("independentMapChannels", [])
                 if isinstance(item, str)
             }
+            extraction_targets = material_targets.get("referencePbrExtraction", {})
+            if not isinstance(extraction_targets, dict):
+                extraction_targets = {}
+            pbr_required = (
+                extraction_targets.get("requiredWhenSourceImagePresent") is True
+                and has_non_empty_detail(spec.get("sourceImage"))
+            )
+            pbr_threshold = extraction_targets.get("targetThreshold", 0.7)
+            if not is_number(pbr_threshold):
+                pbr_threshold = 0.7
             expected_channels = {"albedo", "roughness", "height", "normal", "ambient-occlusion"}
             if not expected_channels.issubset(required_channels):
                 warnings.append(
@@ -1092,6 +1174,10 @@ def validate_look_dev_targets(spec: dict[str, Any], errors: list[str], warnings:
                     warnings.append(
                         f"quality: material {material_id!r} needs an independent ambient-occlusion response"
                     )
+                if pbr_required:
+                    ok, message = reference_pbr_usable(material, float(pbr_threshold))
+                    if not ok:
+                        warnings.append(f"quality: {message}")
     lighting = spec.get("lightingFromPhoto", [])
     if not isinstance(lighting, list):
         errors.append("lightingFromPhoto must be an array")
@@ -1130,7 +1216,7 @@ def validate_spec(spec: dict[str, Any]) -> tuple[list[str], list[str]]:
     validate_sculpt_pipeline(spec, build_pass_ids, errors, warnings)
     validate_look_dev_targets(spec, errors, warnings)
     evidence_ids = validate_evidence(spec, errors, warnings)
-    material_ids = validate_materials(spec, errors)
+    material_ids = validate_materials(spec, errors, warnings)
     validate_components(spec, material_ids, evidence_ids, errors, warnings)
     lod_plan = spec.get("lodPlan")
     if lod_plan is not None and not isinstance(lod_plan, list):

@@ -244,6 +244,26 @@ def quality_first_enabled(spec: dict[str, Any]) -> bool:
     return isinstance(targets, dict) and targets.get("qualityPriority") == "reference-fidelity"
 
 
+def reference_pbr_usable(material: dict[str, Any], threshold: float) -> tuple[bool, str]:
+    material_id = str(material.get("id") or "(unnamed)")
+    reference = material.get("referencePbr")
+    if not isinstance(reference, dict):
+        return False, f"material {material_id!r} needs usable referencePbr extracted from source pixels"
+    if reference.get("usable") is not True:
+        return False, f"material {material_id!r} referencePbr.usable must be true"
+    confidence = reference.get("confidence", reference.get("estimatedFidelity"))
+    if not has_number(confidence) or float(confidence) < threshold:
+        return False, f"material {material_id!r} referencePbr confidence must be >= {threshold}"
+    maps = reference.get("maps")
+    if not isinstance(maps, dict):
+        return False, f"material {material_id!r} referencePbr needs maps"
+    for channel in ("albedo", "roughness", "height", "normal", "ao"):
+        entry = maps.get(channel)
+        if not isinstance(entry, dict) or not has_non_empty(entry.get("url") or entry.get("path")):
+            return False, f"material {material_id!r} referencePbr missing {channel} map path/url"
+    return True, ""
+
+
 def quality_first_material_gaps(spec: dict[str, Any], material: dict[str, Any]) -> list[str]:
     material_id = str(material.get("id") or "(unnamed)")
     gaps: list[str] = []
@@ -252,6 +272,16 @@ def quality_first_material_gaps(spec: dict[str, Any], material: dict[str, Any]) 
     minimum_resolution = material_targets.get("minimumTextureResolution", 1024)
     if not isinstance(minimum_resolution, int) or isinstance(minimum_resolution, bool):
         minimum_resolution = 1024
+    extraction_targets = material_targets.get("referencePbrExtraction", {})
+    if not isinstance(extraction_targets, dict):
+        extraction_targets = {}
+    pbr_required = (
+        extraction_targets.get("requiredWhenSourceImagePresent") is True
+        and has_non_empty(spec.get("sourceImage"))
+    )
+    pbr_threshold = extraction_targets.get("targetThreshold", 0.7)
+    if not has_number(pbr_threshold):
+        pbr_threshold = 0.7
     resolution = material.get("textureResolution")
     if not isinstance(resolution, int) or isinstance(resolution, bool) or resolution < minimum_resolution:
         gaps.append(f"material {material_id!r} textureResolution must be >= {minimum_resolution}")
@@ -281,6 +311,10 @@ def quality_first_material_gaps(spec: dict[str, Any], material: dict[str, Any]) 
         gaps.append(f"material {material_id!r} needs an independent height/normal response")
     if not has_non_empty(material.get("ambientOcclusion")):
         gaps.append(f"material {material_id!r} needs an independent ambient-occlusion response")
+    if pbr_required:
+        ok, message = reference_pbr_usable(material, float(pbr_threshold))
+        if not ok:
+            gaps.append(message)
     return gaps
 
 
