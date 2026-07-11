@@ -332,6 +332,14 @@ codex plugin add threejs-object-sculptor@local
 
 Then open a new Codex thread to pick up the updated skill and scripts.
 
+## Support This Project
+
+If Three.js Object Sculptor helps you, you can support its continued development:
+
+<a href="https://ko-fi.com/harrynguyen112">
+  <img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee on Ko-fi">
+</a>
+
 ## License
 
 MIT
