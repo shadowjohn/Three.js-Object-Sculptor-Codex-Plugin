@@ -18,11 +18,14 @@ test('exporter uses binary GLTFExporter and excludes debug helpers from a clone'
 
 test('export example reloads before enabling download', async () => {
   const html = await readFile('examples/export-table.html', 'utf8');
-  assert.match(html, /exportSculptAsset\(/);
+  assert.match(html, /exportAsset: exportSculptAsset/);
   assert.match(html, /loader\.parse\(/);
   assert.match(html, /getObjectByName\('top'\)/);
   assert.match(html, /EXPORT_OK/);
   assert.match(html, /downloadButton\.disabled = false/);
+  assert.match(html, /exportAssetPackage\(/);
+  assert.match(html, /asset-manifest\.json/);
+  assert.match(html, /recipe\.json/);
 });
 
 test('export clone strips circular runtime metadata without mutating source', () => {
