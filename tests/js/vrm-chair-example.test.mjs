@@ -26,6 +26,8 @@ test('VRM chair demo is URL-driven and exposes enter, exit, move, reset controls
   assert.match(source, /zOffset\.addEventListener\('input'/);
   assert.match(html, /id="zOffset"[^>]+value="0\.1"/);
   assert.match(html, /id="zOffsetValue">\+0\.100 m/);
+  assert.match(html, /id="thighAngle"[^>]+value="95"/);
+  assert.match(html, /id="thighAngleValue">95°/);
   assert.match(source, /let zOffsetValue = Number\(zOffset\.value\)/);
   assert.match(source, /zOffset\.value = String\(zOffsetValue\)/);
   assert.match(source, /vrm\.scene\.position\.y = seatedBaseY \+ zOffsetValue/);
