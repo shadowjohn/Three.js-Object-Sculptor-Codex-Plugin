@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 
 import { createChair } from '../../generators/createChair.js';
-import { VRMAffordanceAdapter } from '../../runtime/VRMAffordanceAdapter.js';
+import { normalizedPoseXSign, VRMAffordanceAdapter } from '../../runtime/VRMAffordanceAdapter.js';
 
 
 const modelUrl = new URL(location.href).searchParams.get('vrm');
@@ -31,13 +31,16 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStan
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
 scene.add(floor);
-const chair = createChair({ id: 'chair-demo', detail: 1, geometryQuality: 0.65, materialQuality: 0.6 });
-chair.scale.setScalar(0.86);
+const chair = createChair({
+  id: 'chair-demo', detail: 1, geometryQuality: 0.65, materialQuality: 0.6,
+  width: 0.31, depth: 0.29, seatThickness: 0.04, backHeight: 0.31, legSize: 0.035,
+});
 scene.add(chair);
 
 let vrm;
 let adapter;
 let moved = false;
+let poseXSign = 1;
 const savedPose = new Map();
 
 function bone(name) {
@@ -50,7 +53,7 @@ async function playPose(name) {
     const node = bone(boneName);
     if (!node) continue;
     if (!savedPose.has(node)) savedPose.set(node, node.quaternion.clone());
-    node.rotation.x += angle;
+    node.rotation.x += angle * poseXSign;
   }
 }
 
@@ -110,6 +113,7 @@ async function loadVrm() {
   vrm = gltf.userData.vrm;
   if (!vrm) throw new Error('model does not contain VRM data');
   VRMUtils.rotateVRM0(vrm);
+  poseXSign = normalizedPoseXSign(vrm.scene);
   if (!bone('hips')) throw new Error('model is missing normalized hips');
   vrm.scene.position.set(0, 0, 1.4);
   vrm.scene.traverse(node => { node.frustumCulled = false; });

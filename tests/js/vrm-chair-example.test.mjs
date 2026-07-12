@@ -12,7 +12,12 @@ test('VRM chair demo is URL-driven and exposes enter, exit, move, reset controls
   assert.match(source, /searchParams\.get\('vrm'\)/);
   assert.match(source, /new VRMLoaderPlugin/);
   assert.match(source, /VRMUtils\.rotateVRM0\(vrm\)/);
-  assert.match(source, /chair\.scale\.setScalar\(0\.86\)/);
+  assert.match(source, /width: 0\.31/);
+  assert.match(source, /depth: 0\.29/);
+  assert.match(source, /backHeight: 0\.31/);
+  assert.doesNotMatch(source, /chair\.scale/);
+  assert.match(source, /normalizedPoseXSign\(vrm\.scene\)/);
+  assert.match(source, /angle \* poseXSign/);
   assert.match(source, /new VRMAffordanceAdapter/);
   assert.match(source, /adapter\.enter\('sit'\)/);
   assert.match(source, /adapter\.exit\(\)/);

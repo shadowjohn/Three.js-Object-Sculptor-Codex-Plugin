@@ -11,6 +11,11 @@ function worldQuaternion(object) {
 }
 
 
+export function normalizedPoseXSign(scene) {
+  return new THREE.Vector3(1, 0, 0).applyQuaternion(scene.quaternion).x < 0 ? -1 : 1;
+}
+
+
 export class VRMAffordanceAdapter {
   constructor(avatar, asset) {
     this.avatar = avatar;

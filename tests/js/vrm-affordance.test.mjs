@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 
 import { createChair } from '../../generators/createChair.js';
-import { VRMAffordanceAdapter } from '../../runtime/VRMAffordanceAdapter.js';
+import * as vrmRuntime from '../../runtime/VRMAffordanceAdapter.js';
+
+
+const { VRMAffordanceAdapter } = vrmRuntime;
 
 
 function avatar() {
@@ -58,6 +61,15 @@ test('preserves the avatar root facing through enter and exit', async () => {
 
   await adapter.exit();
   assert.ok(vrm.scene.quaternion.angleTo(facing) < 1e-6);
+});
+
+test('derives normalized pose X direction from the intake root basis', () => {
+  assert.equal(typeof vrmRuntime.normalizedPoseXSign, 'function');
+  const vrm1Root = new THREE.Group();
+  const vrm0Root = new THREE.Group();
+  vrm0Root.rotation.y = Math.PI;
+  assert.equal(vrmRuntime.normalizedPoseXSign(vrm1Root), 1);
+  assert.equal(vrmRuntime.normalizedPoseXSign(vrm0Root), -1);
 });
 
 test('rejects a second enter while active', async () => {
