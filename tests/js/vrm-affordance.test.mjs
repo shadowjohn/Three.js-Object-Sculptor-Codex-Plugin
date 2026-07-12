@@ -44,6 +44,22 @@ test('enter aligns hips to seat, follows chair, and exit restores parent', async
   assert.ok(vrm.scene.getWorldPosition(new THREE.Vector3()).distanceTo(exit) < 1e-6);
 });
 
+test('preserves the avatar root facing through enter and exit', async () => {
+  const world = new THREE.Group();
+  const chair = createChair({ id: 'chair' });
+  const vrm = avatar();
+  vrm.scene.rotation.y = Math.PI;
+  const facing = vrm.scene.quaternion.clone();
+  world.add(chair, vrm.scene);
+  const adapter = new VRMAffordanceAdapter(vrm, chair);
+
+  await adapter.enter('sit');
+  assert.ok(vrm.scene.quaternion.angleTo(facing) < 1e-6);
+
+  await adapter.exit();
+  assert.ok(vrm.scene.quaternion.angleTo(facing) < 1e-6);
+});
+
 test('rejects a second enter while active', async () => {
   const chair = createChair({ id: 'chair' });
   const vrm = avatar();

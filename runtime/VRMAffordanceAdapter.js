@@ -18,6 +18,7 @@ export class VRMAffordanceAdapter {
     this.state = 'idle';
     this.activeAffordance = null;
     this.originalParent = null;
+    this.originalQuaternion = null;
   }
 
   async enter(id) {
@@ -35,12 +36,13 @@ export class VRMAffordanceAdapter {
 
     this.state = 'entering';
     this.originalParent = this.avatar.scene.parent;
+    this.originalQuaternion = this.avatar.scene.quaternion.clone();
     try {
       await this.avatar.playPose?.(program.pose);
       this.avatar.scene.updateWorldMatrix(true, false);
       const hipsLocal = this.avatar.scene.worldToLocal(hips.getWorldPosition(new THREE.Vector3()));
       target.add(this.avatar.scene);
-      this.avatar.scene.quaternion.identity();
+      this.avatar.scene.quaternion.copy(this.originalQuaternion);
       this.avatar.scene.position.copy(hipsLocal).multiply(this.avatar.scene.scale).multiplyScalar(-1);
       this.avatar.scene.updateWorldMatrix(true, true);
       this.activeAffordance = { id, affordance, program, target };
@@ -63,7 +65,7 @@ export class VRMAffordanceAdapter {
     const exitSocket = runtime.sockets[this.activeAffordance.affordance.exitSocket];
     if (!exitSocket) throw new Error('active affordance is missing exit socket');
     const exitPosition = exitSocket.getWorldPosition(new THREE.Vector3());
-    const exitQuaternion = worldQuaternion(exitSocket);
+    const exitQuaternion = worldQuaternion(exitSocket).multiply(this.originalQuaternion);
     await this.avatar.stopPose?.(this.activeAffordance.program.pose);
 
     const scene = this.avatar.scene;
@@ -80,6 +82,7 @@ export class VRMAffordanceAdapter {
     scene.updateWorldMatrix(true, true);
     this.activeAffordance = null;
     this.originalParent = null;
+    this.originalQuaternion = null;
     this.state = 'idle';
   }
 }

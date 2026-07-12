@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VRMLoaderPlugin } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 
 import { createChair } from '../../generators/createChair.js';
 import { VRMAffordanceAdapter } from '../../runtime/VRMAffordanceAdapter.js';
@@ -32,6 +32,7 @@ floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
 scene.add(floor);
 const chair = createChair({ id: 'chair-demo', detail: 1, geometryQuality: 0.65, materialQuality: 0.6 });
+chair.scale.setScalar(0.86);
 scene.add(chair);
 
 let vrm;
@@ -108,6 +109,7 @@ async function loadVrm() {
   const gltf = await loader.loadAsync(modelUrl);
   vrm = gltf.userData.vrm;
   if (!vrm) throw new Error('model does not contain VRM data');
+  VRMUtils.rotateVRM0(vrm);
   if (!bone('hips')) throw new Error('model is missing normalized hips');
   vrm.scene.position.set(0, 0, 1.4);
   vrm.scene.traverse(node => { node.frustumCulled = false; });
