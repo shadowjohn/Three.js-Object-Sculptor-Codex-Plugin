@@ -21,10 +21,56 @@ export class VehicleController {
     this.steeringLimit = options.steeringLimit ?? 0.5;
     this.wheelbase = options.wheelbase ?? metadata.wheelbase;
     this.wheelRadius = options.wheelRadius ?? metadata.wheelRadius;
+    this.safeExitSpeed = options.safeExitSpeed ?? 0.2;
     this.speed = 0;
     this.steering = 0;
     this.wheelAngle = 0;
+    this.driverOccupied = false;
+    this.doorOpen = false;
+    this.mode = 'parked';
     this.input = { throttle: 0, steering: 0, brake: 0 };
+  }
+
+  openDoor() {
+    if (Math.abs(this.speed) > this.safeExitSpeed) throw new Error('vehicle is moving too fast to open door');
+    this.articulation.setValue('leftDoor', 1.2);
+    this.doorOpen = true;
+    return this;
+  }
+
+  closeDoor() {
+    this.articulation.setValue('leftDoor', 0);
+    this.doorOpen = false;
+    return this;
+  }
+
+  enterDriver() {
+    if (!this.doorOpen) throw new Error('driver door is closed');
+    this.driverOccupied = true;
+    return this;
+  }
+
+  startDrive() {
+    if (!this.driverOccupied) throw new Error('driver seat is empty');
+    if (this.doorOpen) throw new Error('driver door is open');
+    this.mode = 'driving';
+    return this;
+  }
+
+  stop() {
+    this.speed = 0;
+    this.setInput({ brake: 1 });
+    this.mode = 'parked';
+    return this;
+  }
+
+  exitDriver() {
+    if (Math.abs(this.speed) > this.safeExitSpeed) throw new Error('vehicle is moving too fast to exit');
+    if (!this.driverOccupied) throw new Error('driver seat is empty');
+    if (!this.doorOpen) throw new Error('driver door is closed');
+    this.driverOccupied = false;
+    this.mode = 'parked';
+    return this;
   }
 
   setInput(input = {}) {
