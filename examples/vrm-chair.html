@@ -11,6 +11,9 @@
     aside { padding: 20px; background: #17231b; border-right: 1px solid #304438; }
     button { display: block; width: 100%; margin: 10px 0; padding: 10px; color: white; background: #28643b; border: 0; border-radius: 6px; }
     button:disabled { opacity: 0.45; }
+    .control { display: block; margin-top: 18px; }
+    .control output { float: right; color: #9ee6ac; font-family: ui-monospace, monospace; }
+    .control input { width: 100%; margin-top: 8px; }
     #status { margin-top: 18px; color: #9ee6ac; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
     #viewport { min-width: 0; }
   </style>
@@ -32,6 +35,12 @@
       <button id="exitButton" type="button" disabled>Exit Sit</button>
       <button id="moveButton" type="button" disabled>Move Chair</button>
       <button id="resetButton" type="button" disabled>Reset</button>
+      <label class="control" for="zOffset">Z 高度修正 <output id="zOffsetValue">+0.100 m</output>
+        <input id="zOffset" type="range" min="-0.5" max="0.5" step="0.005" value="0.1">
+      </label>
+      <label class="control" for="thighAngle">大腿抬高角度 <output id="thighAngleValue">66°</output>
+        <input id="thighAngle" type="range" min="45" max="95" step="1" value="66">
+      </label>
       <div id="status">LOADING</div>
     </aside>
     <section id="viewport"></section>

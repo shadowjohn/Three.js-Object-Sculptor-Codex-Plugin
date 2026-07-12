@@ -7,9 +7,14 @@ import { createChair } from '../../generators/createChair.js';
 import { normalizedPoseXSign, VRMAffordanceAdapter } from '../../runtime/VRMAffordanceAdapter.js';
 
 
-const modelUrl = new URL(location.href).searchParams.get('vrm');
+const pageUrl = new URL(location.href);
+const modelUrl = pageUrl.searchParams.get('vrm');
 const status = document.getElementById('status');
 const viewport = document.getElementById('viewport');
+const zOffset = document.getElementById('zOffset');
+const zOffsetOutput = document.getElementById('zOffsetValue');
+const thighAngle = document.getElementById('thighAngle');
+const thighAngleOutput = document.getElementById('thighAngleValue');
 const buttons = Object.fromEntries(['enter', 'exit', 'move', 'reset'].map(id => [id, document.getElementById(`${id}Button`)]));
 
 const scene = new THREE.Scene();
@@ -41,20 +46,44 @@ let vrm;
 let adapter;
 let moved = false;
 let poseXSign = 1;
+let seatedBaseY = null;
+let zOffsetValue = Number(zOffset.value);
+const requestedZOffset = Number(pageUrl.searchParams.get('z'));
+if (pageUrl.searchParams.has('z') && Number.isFinite(requestedZOffset)) {
+  zOffsetValue = THREE.MathUtils.clamp(requestedZOffset, Number(zOffset.min), Number(zOffset.max));
+}
+zOffset.value = String(zOffsetValue);
+zOffsetOutput.value = `${zOffsetValue >= 0 ? '+' : ''}${zOffsetValue.toFixed(3)} m`;
+let thighAngleDegrees = Number(thighAngle.value);
+const requestedThighAngle = Number(pageUrl.searchParams.get('thigh'));
+if (pageUrl.searchParams.has('thigh') && Number.isFinite(requestedThighAngle)) {
+  thighAngleDegrees = THREE.MathUtils.clamp(requestedThighAngle, Number(thighAngle.min), Number(thighAngle.max));
+}
+thighAngle.value = String(thighAngleDegrees);
+thighAngleOutput.value = `${thighAngleDegrees.toFixed(0)}°`;
 const savedPose = new Map();
 
 function bone(name) {
   return vrm?.humanoid?.getNormalizedBoneNode?.(name) || vrm?.humanoid?.getRawBoneNode?.(name);
 }
 
-async function playPose(name) {
-  if (name !== 'sit') return;
-  for (const [boneName, angle] of [['leftUpperLeg', -1.15], ['rightUpperLeg', -1.15], ['leftLowerLeg', 1.35], ['rightLowerLeg', 1.35]]) {
+function applySitPose() {
+  const upperLegAngle = -THREE.MathUtils.degToRad(thighAngleDegrees);
+  for (const [boneName, angle] of [['leftUpperLeg', upperLegAngle], ['rightUpperLeg', upperLegAngle], ['leftLowerLeg', 1.35], ['rightLowerLeg', 1.35]]) {
     const node = bone(boneName);
-    if (!node) continue;
-    if (!savedPose.has(node)) savedPose.set(node, node.quaternion.clone());
+    if (!node || !savedPose.has(node)) continue;
+    node.quaternion.copy(savedPose.get(node));
     node.rotation.x += angle * poseXSign;
   }
+}
+
+async function playPose(name) {
+  if (name !== 'sit') return;
+  for (const boneName of ['leftUpperLeg', 'rightUpperLeg', 'leftLowerLeg', 'rightLowerLeg']) {
+    const node = bone(boneName);
+    if (node && !savedPose.has(node)) savedPose.set(node, node.quaternion.clone());
+  }
+  applySitPose();
 }
 
 async function stopPose() {
@@ -70,9 +99,27 @@ function updateButtons() {
   buttons.reset.disabled = !ready;
 }
 
+function applyZOffset() {
+  if (seatedBaseY !== null) vrm.scene.position.y = seatedBaseY + zOffsetValue;
+}
+
+zOffset.addEventListener('input', () => {
+  zOffsetValue = Number(zOffset.value);
+  zOffsetOutput.value = `${zOffsetValue >= 0 ? '+' : ''}${zOffsetValue.toFixed(3)} m`;
+  applyZOffset();
+});
+
+thighAngle.addEventListener('input', () => {
+  thighAngleDegrees = Number(thighAngle.value);
+  thighAngleOutput.value = `${thighAngleDegrees.toFixed(0)}°`;
+  if (adapter?.state === 'active') applySitPose();
+});
+
 buttons.enter.addEventListener('click', async () => {
   try {
     await adapter.enter('sit');
+    seatedBaseY = vrm.scene.position.y;
+    applyZOffset();
     status.textContent = 'SIT_ACTIVE';
   } catch (error) {
     status.textContent = `SIT_FAILED · ${error.message}`;
@@ -83,6 +130,7 @@ buttons.enter.addEventListener('click', async () => {
 buttons.exit.addEventListener('click', async () => {
   try {
     await adapter.exit();
+    seatedBaseY = null;
     status.textContent = 'SIT_EXITED';
   } catch (error) {
     status.textContent = `EXIT_FAILED · ${error.message}`;
@@ -98,6 +146,7 @@ buttons.move.addEventListener('click', () => {
 
 buttons.reset.addEventListener('click', async () => {
   if (adapter.state === 'active') await adapter.exit();
+  seatedBaseY = null;
   chair.position.set(0, 0, 0);
   vrm.scene.position.set(0, 0, 1.4);
   moved = false;
