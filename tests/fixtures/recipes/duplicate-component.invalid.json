@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "id": "bad-table",
+  "profile": "prop",
+  "seed": 1,
+  "units": "meters",
+  "coordinateFrame": {
+    "up": "+Y",
+    "forward": "+Z",
+    "origin": "ground-center"
+  },
+  "parameters": {
+    "detail": 0.5,
+    "geometryQuality": 0.5,
+    "materialQuality": 0.5
+  },
+  "components": [
+    { "id": "leg", "parent": null },
+    { "id": "leg", "parent": null }
+  ],
+  "materials": [],
+  "articulation": [],
+  "affordances": [],
+  "lod": {}
+}

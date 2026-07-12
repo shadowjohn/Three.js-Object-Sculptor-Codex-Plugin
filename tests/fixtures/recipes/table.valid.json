@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "id": "table",
+  "profile": "prop",
+  "seed": 1,
+  "units": "meters",
+  "coordinateFrame": {
+    "up": "+Y",
+    "forward": "+Z",
+    "origin": "ground-center"
+  },
+  "parameters": {
+    "detail": 0.5,
+    "geometryQuality": 0.5,
+    "materialQuality": 0.5
+  },
+  "components": [
+    { "id": "top", "parent": null },
+    { "id": "leg", "parent": "top" }
+  ],
+  "materials": [],
+  "articulation": [
+    { "id": "leg-adjust", "node": "leg" }
+  ],
+  "affordances": [],
+  "lod": {}
+}

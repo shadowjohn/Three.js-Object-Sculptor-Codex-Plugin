@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/threejs-object-sculptor/sculpt-recipe-v1.schema.json",
+  "title": "SculptRecipe v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "profile",
+    "seed",
+    "units",
+    "coordinateFrame",
+    "parameters",
+    "components",
+    "materials",
+    "articulation",
+    "affordances",
+    "lod"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "profile": {
+      "enum": ["prop", "weapon", "attachment", "actor", "vehicle", "gis-object"]
+    },
+    "seed": { "type": "integer" },
+    "units": { "const": "meters" },
+    "coordinateFrame": {
+      "type": "object",
+      "required": ["up", "forward", "origin"],
+      "properties": {
+        "up": { "const": "+Y" },
+        "forward": { "const": "+Z" },
+        "origin": { "const": "ground-center" }
+      },
+      "additionalProperties": false
+    },
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "detail": { "type": "number", "minimum": 0, "maximum": 1 },
+        "geometryQuality": { "type": "number", "minimum": 0, "maximum": 1 },
+        "materialQuality": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "components": { "type": "array" },
+    "materials": { "type": "array" },
+    "articulation": { "type": "array" },
+    "affordances": { "type": "array" },
+    "lod": { "type": "object" }
+  },
+  "additionalProperties": false
+}
