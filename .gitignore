@@ -1,4 +1,6 @@
 .worktrees/
 node_modules/
+.playwright-cli/
+output/playwright/
 __pycache__/
 *.pyc

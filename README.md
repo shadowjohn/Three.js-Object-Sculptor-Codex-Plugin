@@ -6,6 +6,10 @@ Three.js Object Sculptor is a Codex plugin for rebuilding the visible object in 
 
 ## Demo
 
+### Runtime Assets v1 Table
+
+Run a local server from the repository root and open `examples/table.html`. The three sliders regenerate a deterministic table locally; changing detail or quality consumes no AI tokens, while `surface-top`, leg node IDs, bounds, and collider metadata remain stable.
+
 ### Tower Ship
 
 [Open the live tower ship demo](https://3dship.harrysoftware.com)

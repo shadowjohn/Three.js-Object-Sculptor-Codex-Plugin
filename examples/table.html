@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Runtime Assets v1 — Table</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #111713; color: #ecf5ee; font: 14px/1.4 system-ui, sans-serif; }
+    main { display: grid; grid-template-columns: 280px 1fr; height: 100%; }
+    aside { padding: 20px; background: #18231c; border-right: 1px solid #304338; }
+    h1 { margin: 0 0 20px; font-size: 18px; }
+    label { display: grid; grid-template-columns: 1fr 48px; gap: 8px; margin: 16px 0; }
+    input { grid-column: 1 / -1; width: 100%; }
+    output, #stats { color: #9ee6ac; font-family: ui-monospace, monospace; }
+    #viewport { min-width: 0; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "../node_modules/three/build/three.module.js",
+      "three/addons/": "../node_modules/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <main>
+    <aside>
+      <h1>Parameterized Table</h1>
+      <label>Detail <output id="detailValue">0.50</output><input id="detail" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+      <label>Geometry <output id="geometryQualityValue">0.50</output><input id="geometryQuality" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+      <label>Material <output id="materialQualityValue">0.50</output><input id="materialQuality" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+      <div id="stats"></div>
+    </aside>
+    <section id="viewport"></section>
+  </main>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { createTable } from '../generators/createTable.js';
+
+    const viewport = document.getElementById('viewport');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111713);
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+    camera.position.set(2.4, 1.8, 2.6);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    viewport.append(renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.45, 0);
+    controls.update();
+    scene.add(new THREE.HemisphereLight(0xe8fff0, 0x273029, 2.2));
+    const key = new THREE.DirectionalLight(0xffffff, 3.5);
+    key.position.set(3, 5, 4);
+    scene.add(key);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStandardMaterial({ color: 0x26352b, roughness: 1 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    let table;
+    function disposeTable() {
+      if (!table) return;
+      scene.remove(table);
+      table.traverse(({ geometry, material }) => {
+        geometry?.dispose();
+        if (Array.isArray(material)) material.forEach(value => value.dispose());
+        else material?.dispose();
+      });
+    }
+
+    function regenerate() {
+      disposeTable();
+      const values = {};
+      for (const id of ['detail', 'geometryQuality', 'materialQuality']) {
+        values[id] = Number(document.getElementById(id).value);
+        document.getElementById(`${id}Value`).value = values[id].toFixed(2);
+      }
+      table = createTable({ id: 'table-demo', seed: 1, ...values });
+      scene.add(table);
+      renderer.render(scene, camera);
+      document.getElementById('stats').textContent = `triangles ${renderer.info.render.triangles} · calls ${renderer.info.render.calls}`;
+    }
+
+    function resize() {
+      const width = viewport.clientWidth;
+      const height = viewport.clientHeight;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    window.addEventListener('resize', resize);
+    for (const id of ['detail', 'geometryQuality', 'materialQuality']) {
+      document.getElementById(id).addEventListener('input', regenerate);
+    }
+    resize();
+    regenerate();
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
