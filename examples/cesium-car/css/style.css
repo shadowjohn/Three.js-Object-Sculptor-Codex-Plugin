@@ -1,0 +1,6 @@
+html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+#controls { position: absolute; z-index: 2; top: 12px; left: 12px; width: 270px; padding: 14px; color: #eef6ff; background: rgba(15, 24, 34, 0.9); font: 13px system-ui, sans-serif; border-radius: 8px; }
+#controls label { display: block; margin: 8px 0; }
+#controls input:not([type="range"]) { box-sizing: border-box; width: 100%; }
+#controls button { width: 100%; padding: 8px; }
+#status { margin-top: 9px; color: #9dd4ff; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
