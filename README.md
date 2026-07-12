@@ -10,6 +10,10 @@ Three.js Object Sculptor is a Codex plugin for rebuilding the visible object in 
 
 Run a local server from the repository root and open `examples/table.html`. The three sliders regenerate a deterministic table locally; changing detail or quality consumes no AI tokens, while `surface-top`, leg node IDs, bounds, and collider metadata remain stable.
 
+### VRM Chair Affordance
+
+Open `examples/vrm-chair.html?vrm=<same-origin-vrm-url>` to verify that a normalized humanoid can enter, follow, and exit the procedural chair's `sit` affordance. VRM files remain external/local-only; the plugin does not redistribute avatar assets.
+
 ### Tower Ship
 
 [Open the live tower ship demo](https://3dship.harrysoftware.com)
