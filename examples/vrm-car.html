@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Runtime Assets v1 — VRM Car</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #101419; color: #eef5ff; font: 14px system-ui, sans-serif; }
+    main { display: grid; grid-template-columns: 260px 1fr; height: 100%; }
+    aside { padding: 20px; background: #17202a; border-right: 1px solid #304052; }
+    button { display: block; width: 100%; margin: 10px 0; padding: 10px; color: white; background: #285d88; border: 0; border-radius: 6px; }
+    button:disabled { opacity: 0.45; }
+    #status { margin-top: 18px; color: #9fd2ff; font: 12px ui-monospace, monospace; white-space: pre-line; }
+    #viewport { min-width: 0; }
+  </style>
+  <script type="importmap">
+  { "imports": {
+    "three": "../node_modules/three/build/three.module.js",
+    "three/addons/": "../node_modules/three/examples/jsm/",
+    "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3/lib/three-vrm.module.js"
+  } }
+  </script>
+</head>
+<body>
+  <main>
+    <aside>
+      <h1>VRM Car</h1>
+      <button id="openDoorButton" type="button">Open Door</button>
+      <button id="enterButton" type="button" disabled>Enter Driver Seat</button>
+      <button id="exitButton" type="button" disabled>Exit Vehicle</button>
+      <p>W/S throttle · A/D steer · Space brake</p>
+      <div id="status">LOADING</div>
+    </aside>
+    <section id="viewport"></section>
+  </main>
+  <script type="module" src="js/vrm-car-demo.js"></script>
+</body>
+</html>

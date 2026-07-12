@@ -14,6 +14,10 @@ Run a local server from the repository root and open `examples/table.html`. The 
 
 Open `examples/vrm-chair.html?vrm=<same-origin-vrm-url>` to verify that a normalized humanoid can enter, follow, and exit the procedural chair's `sit` affordance. VRM files remain external/local-only; the plugin does not redistribute avatar assets.
 
+### Vehicle and Cesium Smoke
+
+Open `examples/vrm-car.html?vrm=<same-origin-vrm-url>` for the articulated car and VRM driver flow. `examples/cesium-car/` places an exported car LOD0 GLB from its meter/ground-center manifest using longitude, latitude, height, and heading.
+
 ### Tower Ship
 
 [Open the live tower ship demo](https://3dship.harrysoftware.com)

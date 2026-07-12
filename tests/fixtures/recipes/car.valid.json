@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "id": "car",
+  "profile": "vehicle",
+  "seed": 1,
+  "units": "meters",
+  "coordinateFrame": { "up": "+Y", "forward": "+Z", "origin": "ground-center" },
+  "parameters": { "detail": 0.5, "geometryQuality": 0.5, "materialQuality": 0.5 },
+  "components": [
+    { "id": "body", "parent": null },
+    { "id": "doorLeftFront", "parent": "body" },
+    { "id": "doorRightFront", "parent": "body" },
+    { "id": "wheelFrontLeft", "parent": "body" },
+    { "id": "wheelFrontRight", "parent": "body" },
+    { "id": "wheelRearLeft", "parent": "body" },
+    { "id": "wheelRearRight", "parent": "body" },
+    { "id": "steeringWheel", "parent": "body" }
+  ],
+  "materials": [],
+  "articulation": [
+    { "id": "leftDoor", "node": "doorLeftFront" },
+    { "id": "rightDoor", "node": "doorRightFront" },
+    { "id": "wheelFrontLeft", "node": "wheelFrontLeft" },
+    { "id": "wheelFrontRight", "node": "wheelFrontRight" },
+    { "id": "wheelRearLeft", "node": "wheelRearLeft" },
+    { "id": "wheelRearRight", "node": "wheelRearRight" }
+  ],
+  "affordances": [
+    { "id": "open-door", "actionProgram": "open-door" },
+    { "id": "enter-vehicle", "targetSocket": "driverSeat", "actionProgram": "enter-driver-seat" },
+    { "id": "exit-vehicle", "targetSocket": "driverSeat", "actionProgram": "exit-driver-seat" },
+    { "id": "drive", "targetSocket": "driverSeat", "actionProgram": "drive" }
+  ],
+  "lod": {}
+}
