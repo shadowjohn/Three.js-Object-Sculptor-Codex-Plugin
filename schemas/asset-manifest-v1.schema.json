@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/threejs-object-sculptor/asset-manifest-v1.schema.json",
+  "title": "Runtime Asset Manifest v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "generatorVersion",
+    "recipeHash",
+    "profile",
+    "units",
+    "coordinateFrame",
+    "bounds",
+    "lods",
+    "sockets",
+    "colliders",
+    "articulation",
+    "affordances",
+    "license"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "generatorVersion": { "type": "string", "minLength": 1 },
+    "recipeHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "profile": { "type": "string", "minLength": 1 },
+    "units": { "const": "meters" },
+    "coordinateFrame": { "type": "object" },
+    "bounds": { "type": "object" },
+    "lods": { "type": "array", "minItems": 1 },
+    "sockets": { "type": "array", "uniqueItems": true },
+    "colliders": { "type": "array", "uniqueItems": true },
+    "articulation": { "type": "object" },
+    "affordances": { "type": "object" },
+    "license": { "type": "object" }
+  },
+  "additionalProperties": false
+}
