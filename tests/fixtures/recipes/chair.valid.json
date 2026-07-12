@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "id": "chair",
+  "profile": "prop",
+  "seed": 1,
+  "units": "meters",
+  "coordinateFrame": { "up": "+Y", "forward": "+Z", "origin": "ground-center" },
+  "parameters": { "detail": 0.5, "geometryQuality": 0.5, "materialQuality": 0.5 },
+  "components": [
+    { "id": "seat", "parent": null },
+    { "id": "back", "parent": "seat" },
+    { "id": "legFrontLeft", "parent": "seat" },
+    { "id": "legFrontRight", "parent": "seat" },
+    { "id": "legBackLeft", "parent": "seat" },
+    { "id": "legBackRight", "parent": "seat" }
+  ],
+  "materials": [],
+  "articulation": [],
+  "affordances": [
+    { "id": "sit", "targetSocket": "seat", "actionProgram": "sit-enter" }
+  ],
+  "lod": {}
+}
