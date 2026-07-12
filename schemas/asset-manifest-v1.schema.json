@@ -14,10 +14,12 @@
     "coordinateFrame",
     "bounds",
     "lods",
+    "nodes",
     "sockets",
     "colliders",
     "articulation",
     "affordances",
+    "actionPrograms",
     "license"
   ],
   "properties": {
@@ -31,10 +33,12 @@
     "coordinateFrame": { "type": "object" },
     "bounds": { "type": "object" },
     "lods": { "type": "array", "minItems": 1 },
+    "nodes": { "type": "array", "uniqueItems": true },
     "sockets": { "type": "array", "uniqueItems": true },
     "colliders": { "type": "array", "uniqueItems": true },
     "articulation": { "type": "object" },
     "affordances": { "type": "object" },
+    "actionPrograms": { "type": "object" },
     "license": { "type": "object" }
   },
   "additionalProperties": false

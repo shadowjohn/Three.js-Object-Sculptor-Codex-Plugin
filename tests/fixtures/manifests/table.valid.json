@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "id": "table",
+  "version": "1.0.0",
+  "generatorVersion": "1.0.0",
+  "recipeHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "profile": "prop",
+  "units": "meters",
+  "coordinateFrame": {
+    "up": "+Y",
+    "forward": "+Z",
+    "origin": "ground-center"
+  },
+  "bounds": {
+    "center": [0, 0.4, 0],
+    "size": [1.4, 0.8, 0.75]
+  },
+  "lods": [
+    { "level": 0, "url": "table-lod0.glb", "maxDistance": 25 },
+    { "level": 1, "url": "table-lod1.glb", "maxDistance": 80 },
+    { "level": 2, "url": "table-lod2.glb", "maxDistance": 250 }
+  ],
+  "nodes": ["root", "top"],
+  "sockets": ["surface-top"],
+  "colliders": ["body"],
+  "articulation": {
+    "topHinge": { "node": "top", "axis": [0, 1, 0] }
+  },
+  "affordances": {
+    "inspect": { "targetSocket": "surface-top", "actionProgram": "inspect" }
+  },
+  "actionPrograms": {
+    "inspect": { "steps": [] }
+  },
+  "license": {
+    "spdx": "MIT",
+    "source": "generated"
+  }
+}

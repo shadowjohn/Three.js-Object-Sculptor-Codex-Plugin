@@ -13,10 +13,12 @@ const input = () => ({
   },
   generatorVersion: '1.0.0',
   runtime: {
+    nodes: { top: {} },
     sockets: { 'surface-top': {} },
     colliders: { body: { type: 'box' } },
     articulation: {},
     affordances: {},
+    actionPrograms: { inspect: { steps: [] } },
     bounds: { center: [0, 0.4, 0], size: [1.4, 0.8, 0.75] },
     metadata: { profile: 'prop' },
   },
@@ -34,6 +36,8 @@ test('builds ordered LOD entries and semantic metadata', async () => {
   assert.deepEqual(manifest.lods.map(item => item.level), [0, 1]);
   assert.deepEqual(manifest.sockets, ['surface-top']);
   assert.deepEqual(manifest.colliders, ['body']);
+  assert.deepEqual(manifest.nodes, ['top']);
+  assert.deepEqual(Object.keys(manifest.actionPrograms), ['inspect']);
   assert.match(manifest.recipeHash, /^[a-f0-9]{64}$/);
 });
 

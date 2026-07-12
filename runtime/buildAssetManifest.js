@@ -55,10 +55,12 @@ export async function buildAssetManifest({
     coordinateFrame: recipe.coordinateFrame,
     bounds: runtime.bounds || {},
     lods: sortedLods(lods),
+    nodes: Object.keys(runtime.nodes || {}).sort(),
     sockets: Object.keys(runtime.sockets || {}).sort(),
     colliders: Object.keys(runtime.colliders || {}).sort(),
     articulation: canonicalize(runtime.articulation || {}),
     affordances: canonicalize(runtime.affordances || {}),
+    actionPrograms: canonicalize(runtime.actionPrograms || {}),
     license: canonicalize(license),
   };
 }
