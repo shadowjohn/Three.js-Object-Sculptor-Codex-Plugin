@@ -1,10 +1,23 @@
 # Three.js Object Sculptor
 
+[繁體中文](README.md) | **English**
+
 Turn the object in an attached image into a quality-gated, animation-ready procedural Three.js model built entirely with code.
 
 Three.js Object Sculptor is a Codex plugin for rebuilding the visible object in a user-provided attachment image as a code-only Three.js model. It does not try to do photogrammetry, download an art pack, or extract a perfect mesh from one image. Instead, it guides Codex through a sculpting workflow: validate the image, describe the object precisely, decompose it into geometry and material systems, build from blockout to detail, wire an animation-friendly hierarchy, then compare the browser render against the original reference.
 
+> This repository is a fork of [vinhhien112/Three.js-Object-Sculptor-Codex-Plugin](https://github.com/vinhhien112/Three.js-Object-Sculptor-Codex-Plugin), created by **Vinh Hiển** and released under the MIT License. The original concept, plugin workflow, scripts, and demo studies remain credited to the upstream author. Runtime Assets v1, VRM affordances, articulated vehicle controls, GLB packaging, and the Cesium smoke example are additions made in this fork.
+
 ## Demo
+
+Install the local dependency and start a static server from the repository root:
+
+```bash
+npm install
+python -m http.server 8766
+```
+
+Then open `http://127.0.0.1:8766/examples/table.html`. VRM examples require a same-origin VRM URL; serve the repository and avatar folder from a common parent directory when needed.
 
 ### Runtime Assets v1 Table
 
@@ -13,6 +26,13 @@ Run a local server from the repository root and open `examples/table.html`. The 
 ### VRM Chair Affordance
 
 Open `examples/vrm-chair.html?vrm=<same-origin-vrm-url>` to verify that a normalized humanoid can enter, follow, and exit the procedural chair's `sit` affordance. VRM files remain external/local-only; the plugin does not redistribute avatar assets.
+
+The demo exposes `z` avatar-height correction and `thigh` upper-leg angle controls. Current calibrated examples are:
+
+- Alicia: `examples/vrm-chair.html?vrm=/my_vrm_mascot/models/mascot.vrm&z=0.16&thigh=87`
+- Nanachi: `examples/vrm-chair.html?vrm=/my_vrm_mascot/local_assets/characters/nanachi_dimitriyarts/model.vrm&z=0.10&thigh=95`
+
+These VRM paths are local examples only and are not distributed with this repository.
 
 ### Vehicle and Cesium Smoke
 
@@ -81,6 +101,7 @@ The result is less "one-shot generated mesh" and more "Codex as a procedural scu
 
 - Codex with local plugin support.
 - Python 3.10 or newer.
+- Node.js 18 or newer for Runtime Assets examples and tests.
 - A browser project using Three.js when you want to implement the generated factory.
 - For visual acceptance: a screenshot from the rendered model and an AI vision reviewer.
 
@@ -250,6 +271,44 @@ Sync the pass state:
 python3 scripts/sculpt_pass_orchestrator.py sync object-sculpt-spec.json --in-place
 ```
 
+## Runtime Assets v1
+
+Runtime Assets v1 turns a finished procedural reconstruction into a deterministic asset that can be regenerated, attached, articulated, exported, and placed without asking AI to rebuild the model for every change. AI is still useful for interpreting the reference and revising the design; ordinary `detail`, `geometryQuality`, `materialQuality`, and object parameter changes run locally and consume no additional AI tokens.
+
+### Runtime Contract
+
+Each generated root exposes `root.userData.sculptRuntime`, including stable semantic maps for:
+
+- nodes and render meshes;
+- sockets and simplified colliders;
+- articulation joints and limits;
+- affordances and ordered action programs;
+- bounds, units, axes, origin, and asset metadata.
+
+`SculptRecipe` is the compact, deterministic runtime input. `ObjectSculptSpec` remains the detailed authoring and visual quality format. The current golden generators are `createTable()`, `createChair()`, and `createCar()`.
+
+### Table and Local Quality Controls
+
+`examples/table.html` regenerates the table from local sliders. Semantic IDs such as `surface-top` and the leg nodes remain stable across quality levels. `examples/export-table.html` creates LOD0-LOD2 GLBs, reload-validates every artifact, and only then finalizes `asset-manifest.json`.
+
+The package API is `exportAssetPackage(recipe, options)` from `runtime/exportAssetPackage.js`. It requires a procedural `createAsset` factory and a `validateArtifact` callback; a failed LOD validation prevents a partially valid manifest from being published.
+
+### VRM Attachment and Affordances
+
+`attachSculptAsset()` mounts a runtime asset socket to a normalized VRM humanoid bone and returns a handle for socket lookup, visibility, detach, and disposal. `VRMAffordanceAdapter` aligns the avatar to semantic targets such as a chair seat and keeps it attached while the asset moves.
+
+The host application still owns avatar animation, IK, pathfinding, collision resolution, and permissions. The adapters do not perform pose retargeting, generate a skinned character rig, or redistribute VRM files.
+
+### Articulated Vehicle
+
+`createCar()` exposes door hinges, wheel pivots, steering, seats, entry/exit sockets, colliders, and vehicle action programs. `examples/vrm-car.html?vrm=<same-origin-vrm-url>` demonstrates opening the driver door, entering, driving with W/S and A/D, braking with Space, stopping, and exiting. `VehicleController` moves the vehicle root and updates wheel and steering articulation; it intentionally does not provide a physics engine.
+
+### GLB Manifest and Cesium
+
+An exported package contains LOD GLBs, `asset-manifest.json`, and the source recipe. The manifest records meter units, ground-center origin, bounds, LOD bands, sockets, articulation, affordances, attribution, license, and recipe hash.
+
+`examples/cesium-car/` is a Cesium 1.141 placement smoke test. It loads the exported LOD0 GLB and applies longitude, latitude, height, and heading from the manifest-oriented workflow. It is not terrain-aware driving, a Cesium editor, or a 3D Tiles generator.
+
 ## PBR Extraction
 
 The plugin can extract reference-derived procedural PBR evidence from image pixels:
@@ -287,7 +346,7 @@ No. Three.js Object Sculptor does not reconstruct a scanned mesh from pixels. It
 
 ### Does it generate a GLB file?
 
-Not by default. The main output is a code-only Three.js factory and an `ObjectSculptSpec`. You can add export tooling in the target Three.js project if you later need GLB output.
+Yes. The sculpting workflow still produces a code-only Three.js factory and an `ObjectSculptSpec`, while Runtime Assets v1 can export validated LOD GLBs plus `asset-manifest.json` through `exportAssetPackage()`. See `examples/export-table.html` for the browser flow.
 
 ### Can the generated model be animated?
 
@@ -309,9 +368,18 @@ It uses a quality contract, staged build passes, browser screenshots, one refere
 
 ```text
 .codex-plugin/plugin.json
+LICENSE
+README.md
+README.en.md
 skills/object-to-threejs-procedural/SKILL.md
 skills/object-to-threejs-procedural/references/
-scripts/
+schemas/              SculptRecipe and asset manifest schemas
+runtime/              Runtime contract, adapters, controllers, and exporters
+generators/           Table, chair, and car procedural factories
+examples/             Browser demos and Cesium placement smoke test
+scripts/              ObjectSculptSpec and validation tools
+tests/js/             Runtime and browser-contract tests
+tests/python/         Schema and repository-layout tests
 ```
 
 Important scripts:
@@ -330,8 +398,10 @@ Important scripts:
 
 - A single image cannot reveal hidden sides or guarantee exact geometry.
 - Transparent glass, smoke, liquid, fur, fine cloth, and exact likeness tasks may require extra references or a lower-fidelity target.
-- The generated factory is a starting point for procedural construction, not a finished asset pipeline replacement.
+- The generated factory still requires deliberate visual refinement for production use; runtime quality sliders do not invent missing design information.
 - AI vision review is expected for acceptance; the scripts package evidence but do not magically judge visual quality by themselves.
+- Runtime articulation is pivot-based and does not replace character skinning, IK, physics, or navigation systems.
+- Cesium support currently covers GLB placement only, not terrain driving or 3D Tiles generation.
 
 ## Development Notes
 
@@ -344,9 +414,15 @@ codex plugin add threejs-object-sculptor@local
 
 Then open a new Codex thread to pick up the updated skill and scripts.
 
-## Support This Project
+## Attribution
 
-If Three.js Object Sculptor helps you, you can support its continued development:
+Three.js Object Sculptor was created by [Vinh Hiển (`vinhhien112`)](https://github.com/vinhhien112). This fork preserves the upstream Git history, original author notice, project links, support link, and MIT license. Please retain the original copyright and permission notice when copying or redistributing this project or substantial portions of it.
+
+Fork-specific work is documented as an extension of the upstream project, not a replacement of its authorship.
+
+## Support The Original Project
+
+If Three.js Object Sculptor helps you, you can support the original author and continued upstream development:
 
 <a href="https://ko-fi.com/harrynguyen112">
   <img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee on Ko-fi">
@@ -354,4 +430,4 @@ If Three.js Object Sculptor helps you, you can support its continued development
 
 ## License
 
-MIT
+MIT. See [`LICENSE`](LICENSE) for the complete terms and the original `Copyright (c) 2026 Vinh Hiển` notice. The copyright and permission notice must be included in all copies or substantial portions of the software.
