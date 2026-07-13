@@ -17,8 +17,8 @@ The wording will distinguish the original Object Sculptor concept from later for
 
 ## Files
 
-- Update `README.md` as the English source document.
-- Add `README.zh-TW.md` as a full Traditional Chinese counterpart.
+- Replace `README.md` with the full Traditional Chinese primary document.
+- Move and update the English source document as `README.en.md`.
 - Add a language switch at the top of both files.
 
 No changelog or release version will be introduced for this documentation pass.
